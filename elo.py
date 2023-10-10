@@ -137,7 +137,7 @@ def main():
         # Record a game where you won against yourself
         record_game('NBS', 'NBS', 0)
 
-    for _ in range(10 - num_habits):
+    for _ in range(11 - num_habits):
         # Record a game where you lost against yourself
         record_game('NBS', 'NBS', 1)
 
