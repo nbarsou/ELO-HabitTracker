@@ -1,6 +1,9 @@
 # Database 
 *.db
 
+# Mac Things 
+.DS_Store
+
 # Scripts 
 makefile.sh
 
