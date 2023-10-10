@@ -21,10 +21,6 @@ def db_innit():
 			player_name TEXT,
 			opponent_name TEXT,
 			player_result INTEGER,
-            prev_player_elo INTEGER,
-            prev_opponent_elo INTEGER,
-            new_player_elo INTEGER,
-            new_opponent_elo INTEGET,
 			game_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)
 	''')
@@ -50,6 +46,8 @@ def record_game(player_name, opponent_name, player_result):
     conn = sqlite3.connect('elo_ratings.db')
     cursor = conn.cursor()
 
+    # Insert the game record into the "games" table
+    cursor.execute('INSERT INTO games (player_name, opponent_name, player_result) VALUES (?, ?, ?)', (player_name, opponent_name, player_result))
 
     # Get the current ratings for the players
     cursor.execute('SELECT elo FROM players WHERE name = ?', (player_name,))
@@ -61,9 +59,6 @@ def record_game(player_name, opponent_name, player_result):
     # Calculate the new ratings
     new_player_rating = calculate_elo_rating(player_rating, opponent_rating, player_result)
     new_opponent_rating = calculate_elo_rating(opponent_rating, player_rating, 1 - player_result)
-
-    # Insert the game record into the "games" table
-    cursor.execute('INSERT INTO games (player_name, opponent_name, player_result, player_elo, opponent_elo) VALUES (?, ?, ?)', (player_name, opponent_name, player_result, get_player_rating(player_name), get_player_rating(opponent_name), new_player_rating, new_opponent_rating))
 
     # Update the ratings in the database
     cursor.execute('UPDATE players SET elo = ? WHERE name = ?', (new_player_rating, player_name))
