@@ -108,6 +108,35 @@ def get_player_rating(player_name):
     return rating
 
 
+def deductMissingDays():
+    conn = sqlite3.connect("elo_ratings.db")
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT game_date FROM games ORDER BY game_date DESC LIMIT 1")
+    result = cursor.fetchone()
+
+    if not result:
+        print("No records found in the games table.")
+        return
+
+    last_day = datetime.strptime(result[0], "%Y-%m-%d %H:%M:%S.%f")
+    elapsed_time = datetime.today() - last_day
+    if elapsed_time.days > 1:
+        elo_deduction_total = elapsed_time.days * elo_deduction
+        new_elo = get_player_rating("NBS") - elo_deduction_total
+        print("More than 1 day has passed since the last record.")
+        print(
+            f"You missed {elapsed_time.days} days. Deducted {elo_deduction_total} ELO."
+        )
+        print(f"Your new rank is {get_rank_name(new_elo)} with {new_elo}")
+    else:
+        # Perform other logic when the difference in days is 1 or less
+        print(f"{elapsed_time} has passed since the last record.")
+        # Your other logic here
+
+    conn.close()
+
+
 def get_rank_name(elo):
     if elo < 800:
         return "Iron"
@@ -166,27 +195,20 @@ def main():
     num_habits = int(input("How many habits did you do:"))
 
     # Deduct ELO for missed days
-    missed_days = numberHabits - num_habits
-    if missed_days > 0:
-        elo_deduction_total = missed_days * elo_deduction
-        new_elo = get_player_rating("NBS") - elo_deduction_total
-        print(f"You missed {missed_days} days. Deducted {elo_deduction_total} ELO.")
-        print(f"Your new rank is {get_rank_name(new_elo)} with {new_elo}")
+    deductMissingDays()
+
+    for _ in range(num_habits):
+        # Record a game where you won against yourself
+        record_game("NBS", "NBS", 0)
+
+    new_elo = get_player_rating("NBS")
+
+    if prev_elo < new_elo:
+        print(f"You won some ELO, your rank is {get_rank_name(new_elo)} with {new_elo}")
     else:
-        for _ in range(num_habits):
-            # Record a game where you won against yourself
-            record_game("NBS", "NBS", 0)
-
-        new_elo = get_player_rating("NBS")
-
-        if prev_elo < new_elo:
-            print(
-                f"You won some ELO, your rank is {get_rank_name(new_elo)} with {new_elo}"
-            )
-        else:
-            print(
-                f"You lost some ELO, your rank is {get_rank_name(new_elo)} with {new_elo}"
-            )
+        print(
+            f"You lost some ELO, your rank is {get_rank_name(new_elo)} with {new_elo}"
+        )
 
     print_rank(get_player_rating("NBS"))
     exit()
